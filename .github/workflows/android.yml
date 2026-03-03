@@ -65,6 +65,19 @@ jobs:
       - name: Install cargo-quad-apk
         run: cargo install cargo-quad-apk --locked
 
+      - name: Add NDK tool aliases for cargo-quad-apk compatibility
+        run: |
+          NDK_BIN="/usr/local/lib/android/sdk/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          cd "$NDK_BIN"
+          ln -sf llvm-ar aarch64-linux-android-ar
+          ln -sf ld.lld aarch64-linux-android-ld
+          ln -sf llvm-readelf aarch64-linux-android-readelf
+          ln -sf llvm-objcopy aarch64-linux-android-objcopy
+          ln -sf llvm-strip aarch64-linux-android-strip
+          ln -sf llvm-ranlib aarch64-linux-android-ranlib
+          ln -sf llvm-nm aarch64-linux-android-nm
+          ln -sf llvm-objdump aarch64-linux-android-objdump
+
       - name: Build APK
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
