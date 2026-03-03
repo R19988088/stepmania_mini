@@ -58,11 +58,11 @@ jobs:
         with:
           ndk-version: r26d
 
-      - name: Install cargo-quad
-        run: cargo install --git https://github.com/not-fl3/cargo-quad cargo-quad
+      - name: Install cargo-quad-apk
+        run: cargo install cargo-quad-apk
 
       - name: Build Release APK
-        run: cargo quad apk build --release
+        run: cargo quad-apk build --release --target aarch64-linux-android
 
       - name: Decode And Sign APK (Optional Fixed Key)
         env:
