@@ -8,24 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  windows-exe:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@1.88.0
-
-      - name: Build Release EXE
-        run: cargo build --release
-
-      - name: Upload EXE Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mini_stepmania_windows_exe
-          path: target/release/mini_stepmania_rust.exe
-
   android-apk:
     runs-on: ubuntu-latest
     env:
@@ -37,7 +19,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@1.88.0
         with:
-          targets: aarch64-linux-android, armv7-linux-androideabi
+          targets: aarch64-linux-android
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -57,7 +39,7 @@ jobs:
         id: setup-ndk
         uses: nttld/setup-ndk@v1
         with:
-          ndk-version: r26d
+          ndk-version: r25c
 
       - name: Install cargo-quad-apk
         run: cargo install cargo-quad-apk --locked
@@ -77,12 +59,6 @@ jobs:
           if [ ! -f "$NDK_BIN/aarch64-linux-android-ld" ]; then
             ln -s "$NDK_BIN/ld.lld" "$NDK_BIN/aarch64-linux-android-ld"
           fi
-          if [ ! -f "$NDK_BIN/arm-linux-androideabi-ar" ]; then
-            ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/arm-linux-androideabi-ar"
-          fi
-          if [ ! -f "$NDK_BIN/arm-linux-androideabi-ld" ]; then
-            ln -s "$NDK_BIN/ld.lld" "$NDK_BIN/arm-linux-androideabi-ld"
-          fi
 
       - name: Build Release APK
         env:
@@ -91,7 +67,6 @@ jobs:
           TARGET_AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
           CARGO_TARGET_AARCH64_LINUX_ANDROID_AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
           CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android29-clang
-          CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi29-clang
         run: cargo quad-apk build --release --target aarch64-linux-android
 
       - name: Decode And Sign APK (Optional Fixed Key)
