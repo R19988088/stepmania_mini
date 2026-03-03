@@ -74,6 +74,9 @@ jobs:
           if [ ! -f "$NDK_BIN/arm-linux-androideabi-ar" ]; then
             ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/arm-linux-androideabi-ar"
           fi
+          if [ ! -f "$NDK_BIN/arm-linux-androideabi-ld" ]; then
+            ln -s "$NDK_BIN/ld.lld" "$NDK_BIN/arm-linux-androideabi-ld"
+          fi
 
       - name: Build Release APK
         env:
@@ -81,6 +84,8 @@ jobs:
           AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
           TARGET_AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
           CARGO_TARGET_AARCH64_LINUX_ANDROID_AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
+          CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android29-clang
+          CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi29-clang
         run: cargo quad-apk build --release --target aarch64-linux-android
 
       - name: Decode And Sign APK (Optional Fixed Key)
