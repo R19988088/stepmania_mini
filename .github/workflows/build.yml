@@ -48,6 +48,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android Platform 30
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
         with:
