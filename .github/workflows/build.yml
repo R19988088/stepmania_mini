@@ -62,7 +62,7 @@ jobs:
         run: cargo install cargo-apk
 
       - name: Build Release APK
-        run: cargo apk build --release --target aarch64-linux-android
+        run: cargo apk build --release --target aarch64-linux-android --bin mini_stepmania_rust
 
       - name: Decode And Sign APK (Optional Fixed Key)
         env:
