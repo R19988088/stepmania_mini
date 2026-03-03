@@ -71,6 +71,9 @@ jobs:
       - name: NDK AR Compatibility Link
         run: |
           NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          if [ ! -f "$NDK_BIN/aarch64-linux-android-ar" ]; then
+            ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/aarch64-linux-android-ar"
+          fi
           if [ ! -f "$NDK_BIN/arm-linux-androideabi-ar" ]; then
             ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/arm-linux-androideabi-ar"
           fi
