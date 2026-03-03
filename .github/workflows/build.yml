@@ -58,11 +58,11 @@ jobs:
         with:
           ndk-version: r26d
 
-      - name: Install cargo-apk
-        run: cargo install cargo-apk
+      - name: Install cargo-quad
+        run: cargo install cargo-quad
 
       - name: Build Release APK
-        run: cargo apk build --release --target aarch64-linux-android --bin mini_stepmania_rust
+        run: cargo quad apk build --release
 
       - name: Decode And Sign APK (Optional Fixed Key)
         env:
