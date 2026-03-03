@@ -1,0 +1,7 @@
+target/
+cache/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
