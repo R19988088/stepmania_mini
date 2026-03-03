@@ -74,6 +74,9 @@ jobs:
           if [ ! -f "$NDK_BIN/aarch64-linux-android-ar" ]; then
             ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/aarch64-linux-android-ar"
           fi
+          if [ ! -f "$NDK_BIN/aarch64-linux-android-ld" ]; then
+            ln -s "$NDK_BIN/ld.lld" "$NDK_BIN/aarch64-linux-android-ld"
+          fi
           if [ ! -f "$NDK_BIN/arm-linux-androideabi-ar" ]; then
             ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/arm-linux-androideabi-ar"
           fi
