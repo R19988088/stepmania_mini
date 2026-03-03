@@ -57,17 +57,24 @@ jobs:
       - name: Setup Android SDK + NDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+          add-to-path: true
+
       - name: Install Android packages
         run: |
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;25.2.9519653"
+          sdkmanager "platform-tools" "platforms;android-29" "build-tools;29.0.3"
 
       - name: Install cargo-quad-apk
         run: cargo install cargo-quad-apk --locked
 
       - name: Add NDK tool aliases for cargo-quad-apk compatibility
         run: |
-          NDK_BIN="/usr/local/lib/android/sdk/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
           cd "$NDK_BIN"
           ln -sf llvm-ar aarch64-linux-android-ar
           ln -sf ld.lld aarch64-linux-android-ld
@@ -82,8 +89,10 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-          NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
-          RUSTFLAGS: -Lnative=/usr/local/lib/android/sdk/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/14.0.7/lib/linux/aarch64
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          RUSTFLAGS: -Lnative=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/14.0.7/lib/linux/aarch64
         run: |
           cargo quad-apk build --release --target aarch64-linux-android
 
