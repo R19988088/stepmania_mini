@@ -68,9 +68,19 @@ jobs:
             sed -i '0,/^version = 4$/s//version = 3/' Cargo.lock
           fi
 
+      - name: NDK AR Compatibility Link
+        run: |
+          NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          if [ ! -f "$NDK_BIN/arm-linux-androideabi-ar" ]; then
+            ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/arm-linux-androideabi-ar"
+          fi
+
       - name: Build Release APK
         env:
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
+          TARGET_AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
+          CARGO_TARGET_AARCH64_LINUX_ANDROID_AR: ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
         run: cargo quad-apk build --release --target aarch64-linux-android
 
       - name: Decode And Sign APK (Optional Fixed Key)
