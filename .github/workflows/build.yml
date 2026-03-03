@@ -59,6 +59,27 @@ jobs:
       - name: Build Release APK
         run: cargo apk build --release --target aarch64-linux-android
 
+      - name: Decode Keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+
+      - name: Sign APK With Fixed Key
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          set -e
+          mapfile -t apks < <(find target -type f -name "*.apk")
+          for apk in "${apks[@]}"; do
+            out="${apk%.apk}-signed.apk"
+            apksigner sign \
+              --ks release.keystore \
+              --ks-pass pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+              --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+              --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
+              --out "$out" \
+              "$apk"
+          done
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -66,3 +87,4 @@ jobs:
           path: |
             target/android-artifacts/release/apk/*.apk
             target/android-artifacts/aarch64-linux-android/release/apk/*.apk
+            target/**/*-signed.apk
