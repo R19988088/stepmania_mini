@@ -74,16 +74,26 @@ jobs:
 
       - name: Add NDK tool aliases for cargo-quad-apk compatibility
         run: |
-          NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          cd "$NDK_BIN"
-          ln -sf llvm-ar aarch64-linux-android-ar
-          ln -sf ld.lld aarch64-linux-android-ld
-          ln -sf llvm-readelf aarch64-linux-android-readelf
-          ln -sf llvm-objcopy aarch64-linux-android-objcopy
-          ln -sf llvm-strip aarch64-linux-android-strip
-          ln -sf llvm-ranlib aarch64-linux-android-ranlib
-          ln -sf llvm-nm aarch64-linux-android-nm
-          ln -sf llvm-objdump aarch64-linux-android-objdump
+          set -euxo pipefail
+          CANDIDATES=(
+            "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            "/opt/hostedtoolcache/ndk/r25c/x64/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            "/usr/local/lib/android/sdk/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          )
+          for NDK_BIN in "${CANDIDATES[@]}"; do
+            if [ -d "$NDK_BIN" ]; then
+              cp -f "$NDK_BIN/llvm-ar" "$NDK_BIN/aarch64-linux-android-ar" || true
+              cp -f "$NDK_BIN/ld.lld" "$NDK_BIN/aarch64-linux-android-ld" || true
+              cp -f "$NDK_BIN/llvm-readelf" "$NDK_BIN/aarch64-linux-android-readelf" || true
+              cp -f "$NDK_BIN/llvm-objcopy" "$NDK_BIN/aarch64-linux-android-objcopy" || true
+              cp -f "$NDK_BIN/llvm-strip" "$NDK_BIN/aarch64-linux-android-strip" || true
+              cp -f "$NDK_BIN/llvm-ranlib" "$NDK_BIN/aarch64-linux-android-ranlib" || true
+              cp -f "$NDK_BIN/llvm-nm" "$NDK_BIN/aarch64-linux-android-nm" || true
+              cp -f "$NDK_BIN/llvm-objdump" "$NDK_BIN/aarch64-linux-android-objdump" || true
+              chmod +x "$NDK_BIN"/aarch64-linux-android-* || true
+              ls -l "$NDK_BIN/aarch64-linux-android-readelf" || true
+            fi
+          done
 
       - name: Build APK
         env:
