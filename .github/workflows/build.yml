@@ -10,9 +10,6 @@ on:
 jobs:
   windows-exe:
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: mini_stepmania_rust
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,13 +24,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mini_stepmania_windows_exe
-          path: mini_stepmania_rust/target/release/mini_stepmania_rust.exe
+          path: target/release/mini_stepmania_rust.exe
 
   android-apk:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: mini_stepmania_rust
     env:
       CARGO_TERM_COLOR: always
     steps:
@@ -70,5 +64,5 @@ jobs:
         with:
           name: mini_stepmania_android_apk
           path: |
-            mini_stepmania_rust/target/android-artifacts/release/apk/*.apk
-            mini_stepmania_rust/target/android-artifacts/aarch64-linux-android/release/apk/*.apk
+            target/android-artifacts/release/apk/*.apk
+            target/android-artifacts/aarch64-linux-android/release/apk/*.apk
