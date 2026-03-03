@@ -136,6 +136,7 @@ const UI_FONT_CANDIDATES: [&str; 2] = [
     "assets/fonts/JingNanBoBoHei-Bold.ttf",
 ];
 const GAME_SPEED_FILE: &str = "last_game_speed.txt";
+const AUTOPLAY_FILE: &str = "last_autoplay.txt";
 
 pub fn window_conf() -> Conf {
     Conf {
@@ -180,6 +181,7 @@ pub struct Game {
     noteskin_cfg: NoteskinConfig,
     bgm_volume: f32,
     sfx_volume: f32,
+    autoplay_enabled: bool,
     paused: bool,
     mode: GameMode,
     results_entered_at: f64,
@@ -299,6 +301,7 @@ impl Game {
             noteskin_cfg,
             bgm_volume: 1.0,
             sfx_volume: 1.0,
+            autoplay_enabled: load_saved_autoplay(),
             paused: false,
             mode: GameMode::Playing,
             results_entered_at: 0.0,
@@ -412,7 +415,9 @@ impl Game {
             let song_time = self.song_time_accum;
             if !self.paused {
                 self.handle_manual_input(song_time);
-                self.autoplay(song_time);
+                if self.autoplay_enabled {
+                    self.autoplay(song_time);
+                }
             }
             self.hit_sfx_sinks.retain(|s| !s.empty());
             self.hit_events
@@ -690,6 +695,11 @@ impl Game {
         self.sfx_volume = (next * 10.0).round() / 10.0;
     }
 
+    fn set_autoplay(&mut self, enabled: bool) {
+        self.autoplay_enabled = enabled;
+        save_autoplay(enabled);
+    }
+
     fn play_tap_sfx(&mut self) {
         self.ensure_tap_sfx_loaded();
         let Some(handle) = &self.audio_handle else { return; };
@@ -710,9 +720,9 @@ impl Game {
         self.tap_sfx = load_decoded_audio_clip_from_candidates(&TAP_SFX_CANDIDATES);
     }
 
-    fn speed_control_layout(&self) -> (Rect, [Rect; 4], [Rect; 4]) {
+    fn speed_control_layout(&self) -> (Rect, [Rect; 5], [Rect; 5]) {
         let panel_w = LOGICAL_W * 0.62;
-        let panel_h = 700.0;
+        let panel_h = 820.0;
         let panel_x = (LOGICAL_W - panel_w) * 0.5;
         let panel_y = LOGICAL_H * 0.50;
         let button_w = 84.0;
@@ -724,9 +734,9 @@ impl Game {
         let side_gap = 28.0;
         let left_x = center_x - side_gap - button_w;
         let right_x = center_x + center_w + side_gap;
-        let mut lefts = [Rect::new(0.0, 0.0, 0.0, 0.0); 4];
-        let mut rights = [Rect::new(0.0, 0.0, 0.0, 0.0); 4];
-        for i in 0..4 {
+        let mut lefts = [Rect::new(0.0, 0.0, 0.0, 0.0); 5];
+        let mut rights = [Rect::new(0.0, 0.0, 0.0, 0.0); 5];
+        for i in 0..5 {
             let y = row_top + i as f32 * row_h + (row_h - button_h) * 0.5;
             lefts[i] = Rect::new(left_x, y, button_w, button_h);
             rights[i] = Rect::new(right_x, y, button_w, button_h);
@@ -755,13 +765,14 @@ impl Game {
         let (_, lefts, rights) = self.speed_control_layout();
         let (back_btn, restart_btn) = self.pause_menu_action_rects();
         let contains = |r: Rect| lx >= r.x && lx <= r.x + r.w && ly >= r.y && ly <= r.y + r.h;
-        for i in 0..4 {
+        for i in 0..5 {
             if contains(lefts[i]) {
                 match i {
                     0 => self.adjust_game_speed(-GAME_SPEED_STEP),
                     1 => self.adjust_speed(-SPEED_STEP),
                     2 => self.adjust_bgm_volume(-BGM_VOL_STEP),
-                    _ => self.adjust_sfx_volume(-SFX_VOL_STEP),
+                    3 => self.adjust_sfx_volume(-SFX_VOL_STEP),
+                    _ => self.set_autoplay(false),
                 }
                 return None;
             }
@@ -770,7 +781,8 @@ impl Game {
                     0 => self.adjust_game_speed(GAME_SPEED_STEP),
                     1 => self.adjust_speed(SPEED_STEP),
                     2 => self.adjust_bgm_volume(BGM_VOL_STEP),
-                    _ => self.adjust_sfx_volume(SFX_VOL_STEP),
+                    3 => self.adjust_sfx_volume(SFX_VOL_STEP),
+                    _ => self.set_autoplay(true),
                 }
                 return None;
             }
@@ -788,16 +800,21 @@ impl Game {
         let (panel, lefts, rights) = self.speed_control_layout();
         draw_rectangle(panel.x, panel.y, panel.w, panel.h, Color::from_rgba(20, 24, 36, 230));
         draw_rectangle_lines(panel.x, panel.y, panel.w, panel.h, 4.0, Color::from_rgba(245, 90, 90, 255));
-        let labels = ["游戏速度", "播放速度", "背景音量", "音效音量"];
         let values = [
             format!("{:.1}x", self.game_speed),
             format!("{:.1}x", self.audio_speed),
             format!("{:.1}", self.bgm_volume),
             format!("{:.1}", self.sfx_volume),
+            if self.autoplay_enabled {
+                "开".to_string()
+            } else {
+                "关".to_string()
+            },
         ];
+        let labels = ["游戏速度", "播放速度", "背景音量", "音效音量", "自动演奏"];
         let row_h = 124.0;
         let row_top = panel.y + 26.0;
-        for i in 0..4 {
+        for i in 0..5 {
             let cy = row_top + i as f32 * row_h;
             let center_w = panel.w * 0.36;
             let center_h = 78.0;
@@ -1840,8 +1857,28 @@ fn save_game_speed(speed: f32) {
     );
 }
 
+fn load_saved_autoplay() -> bool {
+    let raw = fs::read_to_string(autoplay_path()).ok();
+    matches!(
+        raw.as_deref().unwrap_or("").trim().to_ascii_lowercase().as_str(),
+        "1" | "true" | "on"
+    )
+}
+
+fn save_autoplay(enabled: bool) {
+    let path = autoplay_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    let _ = fs::write(path, if enabled { "1" } else { "0" });
+}
+
 fn game_speed_path() -> PathBuf {
     app_storage_root().join(GAME_SPEED_FILE)
+}
+
+fn autoplay_path() -> PathBuf {
+    app_storage_root().join(AUTOPLAY_FILE)
 }
 
 fn app_storage_root() -> PathBuf {

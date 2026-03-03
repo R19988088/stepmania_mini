@@ -59,7 +59,7 @@ jobs:
           ndk-version: r26d
 
       - name: Install cargo-quad
-        run: cargo install cargo-quad
+        run: cargo install --git https://github.com/not-fl3/cargo-quad cargo-quad
 
       - name: Build Release APK
         run: cargo quad apk build --release
