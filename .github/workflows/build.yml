@@ -53,11 +53,19 @@ jobs:
       - name: NDK AR Compatibility Link
         run: |
           NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          NDK_ROOT="${{ steps.setup-ndk.outputs.ndk-path }}"
           if [ ! -f "$NDK_BIN/aarch64-linux-android-ar" ]; then
             ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/aarch64-linux-android-ar"
           fi
           rm -f "$NDK_BIN/aarch64-linux-android-ld"
-          ln -s "$NDK_BIN/aarch64-linux-android29-clang" "$NDK_BIN/aarch64-linux-android-ld"
+          ln -s "$NDK_BIN/ld.lld" "$NDK_BIN/aarch64-linux-android-ld"
+
+          # quad-apk/rustc link line requests -lunwind; provide a resolvable path for ld.lld.
+          UNWIND_SRC="$(find "$NDK_ROOT" -type f -name libunwind.a | head -n 1 || true)"
+          if [ -n "$UNWIND_SRC" ]; then
+            ln -sf "$UNWIND_SRC" "$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/21/libunwind.a"
+            ln -sf "$UNWIND_SRC" "$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libunwind.a"
+          fi
 
       - name: Build Release APK
         env:
