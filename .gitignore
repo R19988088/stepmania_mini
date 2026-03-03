@@ -1,7 +1,8 @@
 target/
-cache/
-.DS_Store
-Thumbs.db
-*.log
-*.tmp
-*.bak
+android-artifacts/
+*.apk
+*.aab
+*.keystore
+*.jks
+.idea/
+.vscode/
