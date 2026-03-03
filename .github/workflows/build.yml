@@ -56,9 +56,8 @@ jobs:
           if [ ! -f "$NDK_BIN/aarch64-linux-android-ar" ]; then
             ln -s "$NDK_BIN/llvm-ar" "$NDK_BIN/aarch64-linux-android-ar"
           fi
-          if [ ! -f "$NDK_BIN/aarch64-linux-android-ld" ]; then
-            ln -s "$NDK_BIN/ld.lld" "$NDK_BIN/aarch64-linux-android-ld"
-          fi
+          rm -f "$NDK_BIN/aarch64-linux-android-ld"
+          ln -s "$NDK_BIN/aarch64-linux-android29-clang" "$NDK_BIN/aarch64-linux-android-ld"
 
       - name: Build Release APK
         env:
