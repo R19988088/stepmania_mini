@@ -54,6 +54,7 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
       - name: Setup Android NDK
+        id: setup-ndk
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r26d
@@ -62,6 +63,8 @@ jobs:
         run: cargo install cargo-quad-apk --locked
 
       - name: Build Release APK
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: cargo quad-apk build --release --target aarch64-linux-android
 
       - name: Decode And Sign APK (Optional Fixed Key)
